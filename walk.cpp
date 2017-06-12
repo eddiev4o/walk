@@ -378,7 +378,7 @@ Flt VecNormalize(Vec vec)
 
 void physics(void)
 {
-	if (gl.walk || gl.keys[XK_Right] || gl.keys[XK_Left]) {
+	if (gl.walk || gl.keys[XK_Right]) {
 		//man is walking...
 		//when time is up, advance the frame.
 		timers.recordTime(&timers.timeCurrent);
@@ -394,6 +394,25 @@ void physics(void)
 				gl.box[i][0] -= 2.0 * (0.05 / gl.delay);
 				if (gl.box[i][0] < -10.0)
 					gl.box[i][0] += gl.xres + 10.0;
+			}
+	}
+	
+	if (gl.walk || gl.keys[XK_Left]) {
+		//man is walking...
+		//when time is up, advance the frame.
+		timers.recordTime(&timers.timeCurrent);
+		double timeSpan = timers.timeDiff(&timers.walkTime, &timers.timeCurrent);
+			if (timeSpan > gl.delay) {
+				//advance
+				++gl.walkFrame;
+				if (gl.walkFrame >= 16)
+					gl.walkFrame -= 16;
+				timers.recordTime(&timers.walkTime);
+			}
+			for (int i=0; i<20; i++) {
+				gl.box[i][0] += 2.0 * (0.05 / gl.delay);
+				if (gl.box[i][0] > 800.0)
+					gl.box[i][0] -= gl.xres + 10.0;
 			}
 	}
 }
