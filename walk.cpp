@@ -85,10 +85,11 @@ public:
 	int walk;
 	int walkFrame;
 	double delay;
-	int keys[65536];
+	char keys[65536];
 	Ppmimage *walkImage;
 	GLuint walkTexture;
 	Vec box[20];
+
 	Global() {
 		done=0;
 		xres=800;
@@ -309,6 +310,35 @@ void checkMouse(XEvent *e)
 	}
 }
 
+void screenCapture() {
+    	static int num = 0;
+    	unsigned char *data = new unsigned char[gl.xres*gl.yres*3];
+	glReadPixels(0,0,gl.xres, gl.yres, GL_RGB, GL_UNSIGNED_BYTE, data);
+	char ts[64];
+	sprintf(ts, "pic%03i.ppm", num++);
+	FILE *fpo = fopen(ts, "w");
+	if (fpo) {
+	    fprintf(fpo, "P6\n");
+	    fprintf(fpo, "%i %i\n", gl.xres, gl.yres);
+	    fprintf(fpo, "255\n");
+	    unsigned char *p = data;
+	    p += ((gl.yres-1) *gl.xres*3);
+	    //upright image, seems to work.
+	    for (int i=0; i<gl.yres; i++) {
+	    	for (int j = 0; j < (gl.xres*3); j++) {
+			fprintf(fpo, "%c", *(p+j));
+		}
+		p = p - (gl.xres*3);
+	    }
+	    //code for inverted image
+	    //for (int i=0; i<(gl.xres*gl.yres*3); i++) {
+	    //	fprintf(fpo, "%c", *(data+i));
+
+	    fclose(fpo);
+	}
+	delete [] data;
+}
+
 void checkKeys(XEvent *e)
 {
 	//keyboard input?
@@ -334,6 +364,10 @@ void checkKeys(XEvent *e)
 		case XK_w:
 			timers.recordTime(&timers.walkTime);
 			gl.walk ^= 1;
+			break;
+		case XK_s:
+			//screen capture
+			screenCapture();
 			break;
 		case XK_Left:
 			break;
@@ -378,7 +412,7 @@ Flt VecNormalize(Vec vec)
 
 void physics(void)
 {
-	if (gl.walk || gl.keys[XK_Right]) {
+	if (gl.walk || gl.keys[XK_Right] || gl.keys[XK_Left]) {
 		//man is walking...
 		//when time is up, advance the frame.
 		timers.recordTime(&timers.timeCurrent);
@@ -391,30 +425,19 @@ void physics(void)
 				timers.recordTime(&timers.walkTime);
 			}
 			for (int i=0; i<20; i++) {
+			    	if(gl.keys[XK_Left])
+				{
+				    gl.box[i][0] += 2.0 * (0.05 / gl.delay);
+				    if (gl.box[i][0] > gl.xres + 10.0)
+					gl.box[i][0] -= gl.xres + 10.0;
+				} else {
 				gl.box[i][0] -= 2.0 * (0.05 / gl.delay);
 				if (gl.box[i][0] < -10.0)
 					gl.box[i][0] += gl.xres + 10.0;
+				}
 			}
 	}
 	
-	if (gl.walk || gl.keys[XK_Left]) {
-		//man is walking...
-		//when time is up, advance the frame.
-		timers.recordTime(&timers.timeCurrent);
-		double timeSpan = timers.timeDiff(&timers.walkTime, &timers.timeCurrent);
-			if (timeSpan > gl.delay) {
-				//advance
-				++gl.walkFrame;
-				if (gl.walkFrame >= 16)
-					gl.walkFrame -= 16;
-				timers.recordTime(&timers.walkTime);
-			}
-			for (int i=0; i<20; i++) {
-				gl.box[i][0] += 2.0 * (0.05 / gl.delay);
-				if (gl.box[i][0] > 800.0)
-					gl.box[i][0] -= gl.xres + 10.0;
-			}
-	}
 }
 
 void render(void)
@@ -504,6 +527,7 @@ void render(void)
 	ggprint8b(&r, 16, c, "-   slower");
 	ggprint8b(&r, 16, c, "right arrow -> walk right");
 	ggprint8b(&r, 16, c, "left arrow  <- walk left");
+	ggprint8b(&r, 16, c, "S- Screen Print");
 	ggprint8b(&r, 16, c, "frame: %i", gl.walkFrame);
 }
 
