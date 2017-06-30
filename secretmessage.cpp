@@ -32,7 +32,7 @@ void program_usage();
 #define PORT 80
 #define USERAGENT "HTMLGET 1.0"
 
-char* mainHttp()
+int mainHttp(char * message)
 {
 	struct sockaddr_in *remote;
 	int sock;
@@ -98,11 +98,12 @@ char* mainHttp()
 			htmlcontent = buf;
 		}
 		if (htmlstart) {
+		strcpy(message, htmlcontent);
 		//Fixed Warning: format not a string literal and no format arguments
 		// ffprintf(stdout, htmlcontent, 0);
 		//fprintf(stdout, htmlcontent, 0);
 		}
-		//memset(buf, 0, tmpres);
+		memset(buf, 0, tmpres);
 	}
 	if (tmpres < 0) {
 		perror("Error receiving data");
@@ -111,7 +112,7 @@ char* mainHttp()
 	free(remote);
 	free(ip);
 	close(sock);
-	return htmlcontent;
+	return 0;
 }
 
 void program_usage()

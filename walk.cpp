@@ -1,3 +1,8 @@
+//Modified by: Eddie Velasco
+//Date: 6/30/17
+//Purpose: Lab5 
+
+
 //3350
 //program: walk.cpp
 //author:  Gordon Griesel
@@ -52,7 +57,7 @@ void checkKeys(XEvent *e);
 void init();
 void physics(void);
 void render(void);
-extern char* mainHttp();
+extern int mainHttp(char message[]);
 //-----------------------------------------------------------------------------
 //Setup timers
 class Timers {
@@ -106,6 +111,8 @@ enum State {
 
 class Global {
 public:
+	char message[150];
+	double mDelay;
 	unsigned char keys[65536];
 	State state;
 	int done;
@@ -129,6 +136,7 @@ public:
 	}
 	Global() {
 		logOpen();
+		mDelay = 2;
 		state = STATE_STARTUP;
 		camera[0] = camera[1] = 0.0;
 		ball_pos[0] = 500.0;
@@ -901,6 +909,7 @@ void render(void)
 	r.center = 0;
 	ggprint8b(&r, 16, c, "W   Walk cycle");
 	ggprint8b(&r, 16, c, "E   Explosion");
+	ggprint8b(&r, 16, c, "P   Play/Pause");
 	ggprint8b(&r, 16, c, "+   faster");
 	ggprint8b(&r, 16, c, "-   slower");
 	ggprint8b(&r, 16, c, "right arrow -> walk right");
@@ -934,7 +943,13 @@ void render(void)
 		r.left = gl.xres/2 - 100;
 		ggprint8b(&r, 16, 0, "Press W - Walk Cycle");
 		ggprint8b(&r, 16, 0, "Press P - Play/Pause");
-		ggprint8b(&r, 16, 0, mainHttp());
+		timers.recordTime(&timers.timeCurrent);
+		double timeSpan = timers.timeDiff(&timers.httpTime, &timers.timeCurrent);
+		if (timeSpan > gl.mDelay) {
+			mainHttp(gl.message);
+			timers.recordTime(&timers.httpTime);
+		}
+		ggprint8b(&r, 16, 0, gl.message);
 	}
 	if (gl.state == STATE_PAUSE) {	
 		h = 100.0;
