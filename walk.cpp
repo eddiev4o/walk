@@ -22,7 +22,7 @@
 //defined types
 typedef double Flt;
 typedef double Vec[3];
-typedef Flt	Matrix[4][4];
+typedef Flt Matrix[4][4];
 
 //macros
 #define rnd() (((double)rand())/(double)RAND_MAX)
@@ -100,6 +100,7 @@ enum State {
 	STATE_NONE,
 	STATE_STARTUP,
 	STATE_GAMEPLAY,
+	STATE_PAUSE,
 	STATE_GAMEOVER
 };
 
@@ -169,9 +170,8 @@ public:
 	Flt ftsz[2];
 	Flt tile_base;
 	Level() {
-	    	for (int i=0; i < 180; i++)
-		{
-		    dynamicHeight[i] = -1;
+	    	for (int i=0; i < 180; i++) {
+			dynamicHeight[i] = -1;
 		}
 		//Log("Level constructor\n");
 		tilesize[0] = 32;
@@ -195,7 +195,7 @@ public:
 				++nrows;
 			}
 			fclose(fpi);
-			//printf("nrows of background data: %i\n", nrows);
+		//printf("nrows of background data: %i\n", nrows);
 		}
 		for (int i=0; i<nrows; i++) {
 			for (int j=0; j<ncols; j++) {
@@ -464,7 +464,7 @@ void screenCapture()
 		vid = 1;
 	}
 	unsigned char *data = (unsigned char *)malloc(gl.xres * gl.yres * 3);
-    glReadPixels(0, 0, gl.xres, gl.yres, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glReadPixels(0, 0, gl.xres, gl.yres, GL_RGB, GL_UNSIGNED_BYTE, data);
 	char ts[32];
 	sprintf(ts, "./vid/pic%03i.ppm", fnum);
 	FILE *fpo = fopen(ts,"w");	
@@ -515,9 +515,16 @@ void checkKeys(XEvent *e)
 	}
 	if (shift) {}
 	switch (key) {
-	    	case XK_p:
-		    	gl.state = STATE_GAMEPLAY;
-		    	break;
+		case XK_p:
+			if (gl.state == STATE_GAMEPLAY) {
+				gl.state = STATE_PAUSE;
+				break;
+			}	
+			gl.state = STATE_GAMEPLAY;
+			break;
+		case XK_x:
+			gl.state = STATE_PAUSE;
+			break;
 		case XK_s:
 			screenCapture();
 			break;
@@ -585,7 +592,7 @@ Flt VecNormalize(Vec vec)
 
 void physics(void)
 {
-	if (gl.walk || gl.keys[XK_Right] || gl.keys[XK_Left]) {
+	if (gl.state == STATE_GAMEPLAY || gl.walk || gl.keys[XK_Right] || gl.keys[XK_Left]) {
 		//man is walking...
 		//when time is up, advance the frame.
 		timers.recordTime(&timers.timeCurrent);
@@ -666,25 +673,25 @@ void physics(void)
 		hgt = lev.dynamicHeight[col];
 	} else {	
 	for (int i = 0; i < lev.nrows; i++) {
-	    if (lev.arr[i][col] != ' ') {
-		hgt = i;
-		lev.dynamicHeight[col] = i;
-	    	break;
-	    }
+		if (lev.arr[i][col] != ' ') {
+			hgt = i;
+			lev.dynamicHeight[col] = i;
+			break;
+		}
 	}
 	//printf("%s %d \n", "Height Calculated for Column: ", col);
 	}
 	for (int i = 0; i < lev.nrows; i++) {
-	    if (lev.arr[i][col] != ' ') {
-		hgt = i;
-	    	break;
-	    }
+		if (lev.arr[i][col] != ' ') {
+			hgt = i;
+			break;
+		}
 	}
 	//height of ball is (nrows-1-i)*tile_height + starting point.
 	Flt h = lev.tilesize[1] * (lev.nrows-hgt) + lev.tile_base;
 	if (gl.ball_pos[1] <= h) {
-	    gl.ball_vel[1] = 0.0;
-	    gl.ball_pos[1] = h;
+		gl.ball_vel[1] = 0.0;
+		gl.ball_pos[1] = h;
 	}
 }
 
@@ -778,8 +785,8 @@ void render(void)
 		++col;
 		col = col % lev.ncols;
 	}
-	//draw ball
-	
+
+	//draw ball	
 	glColor3f(1.0, 1.0, 0.0);
 	glPushMatrix();
 	glTranslated(gl.ball_pos[0],gl.ball_pos[1], 0);
@@ -790,9 +797,6 @@ void render(void)
 		glVertex2i(10,  0);
 	glEnd();
 	glPopMatrix();
-
-
-
 
 	//
 	//fake shadow
@@ -825,15 +829,15 @@ void render(void)
 		rgt=0;
 	glBegin(GL_QUADS);
 		if (rgt) {
-			glTexCoord2f(tx,      ty+.5); glVertex2i(cx-w, cy-h);
-			glTexCoord2f(tx,      ty);    glVertex2i(cx-w, cy+h);
-			glTexCoord2f(tx+.125, ty);    glVertex2i(cx+w, cy+h);
-			glTexCoord2f(tx+.125, ty+.5); glVertex2i(cx+w, cy-h);
+			glTexCoord2f(tx,	ty+.5); glVertex2i(cx-w, cy-h);
+			glTexCoord2f(tx,	ty);    glVertex2i(cx-w, cy+h);
+			glTexCoord2f(tx+.125,	ty);    glVertex2i(cx+w, cy+h);
+			glTexCoord2f(tx+.125,	ty+.5); glVertex2i(cx+w, cy-h);
 		} else {
-			glTexCoord2f(tx+.125, ty+.5); glVertex2i(cx-w, cy-h);
-			glTexCoord2f(tx+.125, ty);    glVertex2i(cx-w, cy+h);
-			glTexCoord2f(tx,      ty);    glVertex2i(cx+w, cy+h);
-			glTexCoord2f(tx,      ty+.5); glVertex2i(cx+w, cy-h);
+			glTexCoord2f(tx+.125,	ty+.5); glVertex2i(cx-w, cy-h);
+			glTexCoord2f(tx+.125,	ty);    glVertex2i(cx-w, cy+h);
+			glTexCoord2f(tx,	ty);    glVertex2i(cx+w, cy+h);
+			glTexCoord2f(tx,	ty+.5); glVertex2i(cx+w, cy-h);
 		}
 	glEnd();
 	glPopMatrix();
@@ -907,7 +911,7 @@ void render(void)
 	}
 	//check for startup state
 	if (gl.state == STATE_STARTUP) {
-	    	h = 100.0;
+		h = 100.0;
 		w = 200.0;			
 		glPushMatrix();
 		glEnable(GL_BLEND);
@@ -929,10 +933,32 @@ void render(void)
 		r.center = 0;
 		r.left = gl.xres/2 - 100;
 		ggprint8b(&r, 16, 0, "Press W - Walk Cycle");
-		ggprint8b(&r, 16, 0, "Press P - Play");
+		ggprint8b(&r, 16, 0, "Press P - Play/Pause");
 		ggprint8b(&r, 16, 0, mainHttp());
-
-	
+	}
+	if (gl.state == STATE_PAUSE) {	
+		h = 100.0;
+		w = 200.0;			
+		glPushMatrix();
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glColor4f(1.0,1.0,0.0,0.8);
+		glTranslated(gl.xres/2, gl.yres/2, 0);
+		glBegin(GL_QUADS);
+			glVertex2i(-w, -h);
+			glVertex2i(-w,  h);
+			glVertex2i(w,   h);
+			glVertex2i(w,  -h);
+		glEnd();
+		glDisable(GL_BLEND);
+		glPopMatrix();
+		r.bot = gl.yres/2 + 80;
+		r.left = gl.xres/2;
+		r.center = 1;
+		ggprint8b(&r, 16, 0, "PAUSE SCREEN");
+		r.center = 0;
+		r.left = gl.xres/2 - 100;
+		ggprint8b(&r, 16, 0, "Press P - Play");
 	}
 }
 
