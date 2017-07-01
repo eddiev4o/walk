@@ -600,7 +600,8 @@ Flt VecNormalize(Vec vec)
 
 void physics(void)
 {
-	if (gl.state == STATE_GAMEPLAY || gl.walk || gl.keys[XK_Right] || gl.keys[XK_Left]) {
+	if (gl.state == STATE_GAMEPLAY || gl.walk || 
+			gl.keys[XK_Right] || gl.keys[XK_Left]) {
 		//man is walking...
 		//when time is up, advance the frame.
 		timers.recordTime(&timers.timeCurrent);

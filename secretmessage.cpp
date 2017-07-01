@@ -98,7 +98,7 @@ int mainHttp(char * message)
 			htmlcontent = buf;
 		}
 		if (htmlstart) {
-		strcpy(message, htmlcontent);
+			strcpy(message, htmlcontent);
 		//Fixed Warning: format not a string literal and no format arguments
 		// ffprintf(stdout, htmlcontent, 0);
 		//fprintf(stdout, htmlcontent, 0);
@@ -157,14 +157,17 @@ char *build_get_query(char *host, char *page)
 	char *query;
 	char *getpage = page;
 	//Fixed Warning: deprecated conversion from string constant to 'char'*
-	//char *tpl = (char *) "GET /%s HTTP/1.0\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n"
+	//char *tpl = (char *) "GET /%s HTTP/1.0\r\nHost: %s\r\nUser-Agent:
+			// %s\r\n\r\n"
 	char *tpl = (char *) "GET /%s HTTP/1.0\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n";
 	if (getpage[0] == '/') {
 		getpage = getpage + 1;
-	//fprintf(stderr,"Removing leading \"/\", converting %s to %s\n", page, getpage);
+	//fprintf(stderr,"Removing leading \"/\", converting %s to %s\n",
+			// page, getpage);
 	}
 	// -5 is to consider the %s %s %s in tpl and the ending \0
-	query = (char *)malloc(strlen(host)+strlen(getpage)+strlen(USERAGENT)+strlen(tpl)-5);
+	query = (char *)malloc(strlen(host)+strlen(getpage)+strlen(USERAGENT)
+			+strlen(tpl)-5);
 	sprintf(query, tpl, getpage, host, USERAGENT);
 	return query;
 }
