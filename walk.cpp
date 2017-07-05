@@ -523,6 +523,12 @@ void checkKeys(XEvent *e)
 	}
 	if (shift) {}
 	switch (key) {
+	    	#ifdef UNIT_TEST
+	    	case XK_a:
+		    	void unitTest_normalize();
+			unitTest_normalize();
+			break;
+		#endif //UNIT_TEST
 		case XK_p:
 			if (gl.state == STATE_GAMEPLAY) {
 				gl.state = STATE_PAUSE;
@@ -597,7 +603,27 @@ Flt VecNormalize(Vec vec)
 	vec[2] = zlen * tlen;
 	return(len);
 }
-
+#ifdef UNIT_TEST
+//make macro q @name
+//execute macro press @name
+//execute multiple n = number of times  n@name
+Vec varr[100] = {
+1.0, 2.0, 3.0
+};
+void unitTest_normalize()
+{
+    Vec vec = {10.0, 10.0, 0.0};
+    Flt ret = VecNormalize(vec);
+    Flt tolerance = 0.05;
+    ret = ret - 14.14;
+    ret = fabs(ret);
+    if (ret <= tolerance) {
+	printf("unit test successful. \n");
+    } else {	
+    	printf("unit test failed. ret: %lf vec[0] =%lf\n", ret, vec[0]);
+    }
+}
+#endif //UNIT_TEST
 void physics(void)
 {
 	if (gl.state == STATE_GAMEPLAY || gl.walk || 
